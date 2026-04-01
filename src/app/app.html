@@ -1,0 +1,314 @@
+<div class="editor-layout">
+
+  <!-- Hidden file input for loading -->
+  <input #fileInput type="file" accept=".json" style="display:none"
+    (change)="onFileSelected($event)"/>
+
+  <!-- ═══════════════════  TOOLBAR  ════════════════════════════════════════ -->
+  <header class="toolbar">
+
+    <div class="toolbar-section">
+      <span class="section-title">Fichier</span>
+      <button class="btn" (click)="newDiagram()" title="Nouveau diagramme">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="1" width="8" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v4h4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="2" y="1" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        Nouveau
+      </button>
+      <button class="btn save-btn" (click)="saveDiagram()" title="Sauvegarder et télécharger (.foblex.json)">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 2h8l3 3v8a1 1 0 01-1 1H2a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="9" width="7" height="4" rx=".5" stroke="currentColor" stroke-width="1.5"/><rect x="4.5" y="2" width="5" height="3.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        Sauvegarder
+      </button>
+      <button class="btn" (click)="loadDiagram()" title="Charger un fichier .foblex.json">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1 8V12a1 1 0 001 1h11a1 1 0 001-1V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7.5 2v7M4.5 6l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Charger
+      </button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-section">
+      <span class="section-title">Formes</span>
+      <button class="btn shape-btn rect-btn" (click)="addNode('rectangle')" title="Ajouter un Rectangle">
+        <svg width="18" height="14" viewBox="0 0 18 14"><rect x="1" y="1" width="16" height="12" rx="2" fill="currentColor" opacity=".85"/></svg>
+        Rectangle
+      </button>
+      <button class="btn shape-btn circle-btn" (click)="addNode('circle')" title="Ajouter un Cercle">
+        <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor" opacity=".85"/></svg>
+        Cercle
+      </button>
+      <button class="btn shape-btn diamond-btn" (click)="addNode('diamond')" title="Ajouter un Losange">
+        <svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,1 15,8 8,15 1,8" fill="currentColor" opacity=".85"/></svg>
+        Losange
+      </button>
+      <button class="btn shape-btn process-btn" (click)="addNode('process')" title="Ajouter un Processus">
+        <svg width="20" height="14" viewBox="0 0 20 14"><rect x="1" y="1" width="18" height="12" rx="6" fill="currentColor" opacity=".85"/></svg>
+        Processus
+      </button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-section">
+      <span class="section-title">Groupes</span>
+      <button class="btn" (click)="groupSelected()" [disabled]="!canGroup()" title="Grouper la sélection (min. 2 formes)">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="5" width="7" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="5" width="7" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="1" width="12" height="16" rx="2" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
+        Grouper
+      </button>
+      <button class="btn" (click)="ungroupSelected()" [disabled]="!canUngroup()" title="Dissocier le groupe">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="5" width="7" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="5" width="7" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><line x1="1" y1="1" x2="17" y2="17" stroke="currentColor" stroke-width="1.5"/></svg>
+        Dissocier
+      </button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-section">
+      <span class="section-title">Disposition</span>
+      <select class="toolbar-select" [ngModel]="elkAlgorithm()" (ngModelChange)="elkAlgorithm.set($event)" title="Algorithme de disposition">
+        @for (algo of elkAlgorithms; track algo.value) {
+          <option [value]="algo.value">{{ algo.label }}</option>
+        }
+      </select>
+      <button class="btn" (click)="autoLayout()" [disabled]="nodes().length === 0 || elkLayoutRunning()" title="Appliquer la disposition ELK">
+        @if (elkLayoutRunning()) {
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="spin">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="20 18"/>
+          </svg>
+        } @else {
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <rect x="1" y="1" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="1" y="6" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="1" y="11" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="11" y="3.5" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="11" y="8.5" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M5 3h3l3 2.5M5 8h2l4-1M5 13h3l3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        }
+        Appliquer
+      </button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-section">
+      <span class="section-title">Zoom</span>
+      <button class="btn icon-btn" (click)="zoomOut()" title="Dézoomer">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><line x1="4.5" y1="7" x2="9.5" y2="7" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="12" x2="14.5" y2="14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <button class="btn" (click)="resetZoom()" title="Réinitialiser le zoom">100%</button>
+      <button class="btn icon-btn" (click)="zoomIn()" title="Zoomer">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><line x1="7" y1="4.5" x2="7" y2="9.5" stroke="currentColor" stroke-width="1.5"/><line x1="4.5" y1="7" x2="9.5" y2="7" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="12" x2="14.5" y2="14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-section">
+      <button class="btn danger-btn" (click)="deleteSelected()" [disabled]="!hasSelection()" title="Supprimer la sélection">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M6 4V2.5A.5.5 0 016.5 2h3a.5.5 0 01.5.5V4M5 4l.5 9h5l.5-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Supprimer
+      </button>
+    </div>
+
+    <div class="toolbar-spacer"></div>
+
+    <div class="toolbar-info">
+      @if (selectedNodeIds().length > 0 || selectedGroupIds().length > 0 || selectedConnectionIds().length > 0) {
+        <span class="selection-badge">
+          {{ selectedNodeIds().length + selectedGroupIds().length + selectedConnectionIds().length }} sélectionné(s)
+        </span>
+      }
+      <span class="hint">Glisser depuis <strong>●</strong> pour connecter</span>
+    </div>
+
+  </header>
+
+  <!-- ═══════════════════  MAIN AREA  ══════════════════════════════════════ -->
+  <div class="main-area">
+
+    <!-- ──────── CANVAS ──────── -->
+    <div class="canvas-wrapper">
+      <f-flow #flow fDraggable
+        (fSelectionChange)="onSelectionChange($event)"
+        (fCreateConnection)="onCreateConnection($event)">
+
+        <f-background>
+          <svg:pattern id="dot-pattern" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+            <svg:circle cx="1" cy="1" r="1" fill="#dde3ec"/>
+          </svg:pattern>
+        </f-background>
+
+        <f-canvas #zoom fZoom [fZoomMinimum]="0.15" [fZoomMaximum]="4" [fZoomStep]="0.15">
+
+          <!-- ──── Groups ──── -->
+          @for (group of groups(); track group.id) {
+            <div fGroup [fGroupId]="group.id" [(fGroupPosition)]="group.position" fDragHandle
+              class="group-node"
+              [class.selected]="selectedGroupIds().includes(group.id)"
+              [style.border-color]="group.color()">
+              <div class="group-header" [style.background]="group.color()">
+                <span class="group-label">{{ group.label() }}</span>
+              </div>
+            </div>
+          }
+
+          <!-- ──── Nodes ──── -->
+          @for (node of nodes(); track node.id) {
+            <div fNode [fNodeId]="node.id"
+              [(fNodePosition)]="node.position"
+              [fNodeParentId]="node.groupId()"
+              fDragHandle
+              class="diagram-node"
+              [class]="'shape-' + node.type"
+              [class.selected]="selectedNodeIds().includes(node.id)"
+              [style.--node-color]="node.color()">
+
+              <!-- Input connector (left) -->
+              <div fNodeInput [fInputId]="node.id + '-input'" [fInputMultiple]="true"
+                class="connector connector-in" title="Entrée"></div>
+
+              <!-- Shape content -->
+              <div class="node-inner">
+                <div class="node-icon">
+                  @switch (node.type) {
+                    @case ('rectangle') { <svg width="20" height="16" viewBox="0 0 20 16"><rect x="1" y="1" width="18" height="14" rx="2" fill="currentColor"/></svg> }
+                    @case ('circle')    { <svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="currentColor"/></svg> }
+                    @case ('diamond')   { <svg width="18" height="18" viewBox="0 0 18 18"><polygon points="9,1 17,9 9,17 1,9" fill="currentColor"/></svg> }
+                    @case ('process')   { <svg width="22" height="16" viewBox="0 0 22 16"><rect x="1" y="1" width="20" height="14" rx="7" fill="currentColor"/></svg> }
+                  }
+                </div>
+                <span class="node-label">{{ node.label }}</span>
+              </div>
+
+              <!-- Output connector (right) -->
+              <div fNodeOutput [fOutputId]="node.id + '-output'" [fOutputMultiple]="true"
+                class="connector connector-out" title="Sortie — glisser pour connecter"></div>
+
+            </div>
+          }
+
+          <!-- ──── Connections ──── -->
+          @for (conn of connections(); track conn.id) {
+            <f-connection
+              [fConnectionId]="conn.id"
+              [fOutputId]="conn.sourceId"
+              [fInputId]="conn.targetId"
+              fType="segment"
+              [fSelectionDisabled]="false">
+              <svg:marker fMarker
+                type="end"
+                refX="9" refY="4"
+                width="12" height="8"
+                orient="auto">
+                <svg:path d="M0 0 L9 4 L0 8 Z" fill="#F47A30"/>
+              </svg:marker>
+            </f-connection>
+          }
+
+          <!-- ──── Interactive connection preview ──── -->
+          <f-connection-for-create fType="segment">
+            <svg:marker fMarker
+              type="end"
+              refX="9" refY="4"
+              width="12" height="8"
+              orient="auto">
+              <svg:path d="M0 0 L9 4 L0 8 Z" fill="#F47A30"/>
+            </svg:marker>
+          </f-connection-for-create>
+
+        </f-canvas>
+
+        <f-selection-area></f-selection-area>
+
+      </f-flow>
+
+      <!-- Empty state -->
+      @if (nodes().length === 0 && groups().length === 0) {
+        <div class="empty-state">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" opacity=".25">
+            <rect x="8" y="20" width="20" height="14" rx="3" stroke="#607080" stroke-width="2"/>
+            <rect x="36" y="20" width="20" height="14" rx="3" stroke="#607080" stroke-width="2"/>
+            <path d="M28 27h8" stroke="#607080" stroke-width="2" stroke-linecap="round" marker-end="url(#arr)"/>
+          </svg>
+          <p>Ajoutez des formes depuis la barre d'outils</p>
+          <p class="hint-small">Glissez depuis le connecteur <strong>●</strong> d'une forme pour créer une connexion</p>
+        </div>
+      }
+    </div>
+
+    <!-- ──────── PROPERTIES PANEL ──────── -->
+    <aside class="props-panel">
+      <div class="props-header">Propriétés</div>
+
+      @if (editingNode(); as node) {
+        <div class="props-body">
+          <div class="prop-row">
+            <label class="prop-label">Nom</label>
+            <input class="prop-input" type="text" [value]="node.label"
+              (change)="updateNodeLabel(node, $any($event.target).value)"/>
+          </div>
+          <div class="prop-row">
+            <label class="prop-label">Couleur</label>
+            <div class="color-row">
+              <input class="prop-color" type="color" [value]="node.color()"
+                (input)="updateNodeColor(node, $any($event.target).value)"/>
+              <span class="color-val">{{ node.color() }}</span>
+            </div>
+          </div>
+          <div class="prop-row">
+            <label class="prop-label">Type</label>
+            <span class="prop-badge" [class]="'badge-' + node.type">{{ node.type }}</span>
+          </div>
+          <div class="prop-row">
+            <label class="prop-label">ID</label>
+            <span class="prop-mono">{{ node.id }}</span>
+          </div>
+        </div>
+      } @else if (editingGroup(); as group) {
+        <div class="props-body">
+          <div class="prop-row">
+            <label class="prop-label">Nom</label>
+            <input class="prop-input" type="text" [value]="group.label()"
+              (change)="updateGroupLabel(group, $any($event.target).value)"/>
+          </div>
+          <div class="prop-row">
+            <label class="prop-label">Couleur</label>
+            <div class="color-row">
+              <input class="prop-color" type="color" [value]="group.color()"
+                (input)="updateGroupColor(group, $any($event.target).value)"/>
+              <span class="color-val">{{ group.color() }}</span>
+            </div>
+          </div>
+          <div class="prop-row">
+            <label class="prop-label">ID</label>
+            <span class="prop-mono">{{ group.id }}</span>
+          </div>
+        </div>
+      } @else {
+        <div class="props-empty">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" opacity=".3">
+            <circle cx="16" cy="16" r="14" stroke="#607080" stroke-width="2"/>
+            <path d="M16 10v6M16 22v.5" stroke="#607080" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <p>Sélectionnez un élément pour éditer ses propriétés</p>
+        </div>
+      }
+
+      <!-- Stats -->
+      <div class="props-stats">
+        <div class="stat"><span class="stat-val">{{ nodes().length }}</span><span class="stat-label">formes</span></div>
+        <div class="stat"><span class="stat-val">{{ groups().length }}</span><span class="stat-label">groupes</span></div>
+        <div class="stat"><span class="stat-val">{{ connections().length }}</span><span class="stat-label">liens</span></div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- Toast notification -->
+  @if (toast()) {
+    <div class="toast">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 7l2 2 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {{ toast() }}
+    </div>
+  }
+</div>

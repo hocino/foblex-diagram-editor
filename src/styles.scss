@@ -1,0 +1,25 @@
+/* Global styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Foblex flow overrides */
+f-flow {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+f-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
