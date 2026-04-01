@@ -21,6 +21,7 @@ export interface DiagramData {
     position: IPoint;
     color: string;
     groupId: string | null;
+    businessData?: BusinessObjectData;
   }>;
   groups: Array<{
     id: string;
@@ -33,7 +34,17 @@ export interface DiagramData {
 
 const LS_KEY = 'foblex-diagram';
 
-export type ShapeType = 'rectangle' | 'circle' | 'diamond' | 'process';
+export type ShapeType = 'rectangle' | 'circle' | 'diamond' | 'process' | 'business-object';
+
+export interface BusinessObjectData {
+  title: string;
+  flow: string;
+  duration: string;
+  calendar: string;
+  code: string;
+  effort: number;
+  locked: boolean;
+}
 
 export interface NodeDef {
   id: string;
@@ -42,6 +53,7 @@ export interface NodeDef {
   position: WritableSignal<IPoint>;
   color: WritableSignal<string>;
   groupId: WritableSignal<string | undefined>;
+  businessData: WritableSignal<BusinessObjectData | undefined>;
 }
 
 export interface GroupDef {
@@ -62,6 +74,7 @@ const SHAPE_COLORS: Record<ShapeType, string> = {
   circle: '#F47A30',
   diamond: '#F47A30',
   process: '#F47A30',
+  'business-object': '#F26722',
 };
 
 export type ElkAlgorithm = 'layered' | 'mrtree' | 'radial' | 'force' | 'box';
@@ -79,7 +92,18 @@ const SHAPE_LABELS: Record<ShapeType, string> = {
   circle: 'Cercle',
   diamond: 'Losange',
   process: 'Processus',
+  'business-object': 'Activité',
 };
+
+const DEFAULT_BUSINESS_OBJECT = (index: number): BusinessObjectData => ({
+  title: `Activité ${index}`,
+  flow: 'Flow 6 : CT CND',
+  duration: '50h',
+  calendar: '-',
+  code: 'DRT',
+  effort: 22,
+  locked: true,
+});
 
 @Component({
   selector: 'app-root',
@@ -148,15 +172,20 @@ export class AppComponent {
   addNode(type: ShapeType): void {
     this._nodeCounter++;
     const id = `node-${this._nodeCounter}`;
+    const businessData = type === 'business-object'
+      ? DEFAULT_BUSINESS_OBJECT(this._nodeCounter)
+      : undefined;
+
     this.nodes.update((nodes) => [
       ...nodes,
       {
         id,
-        label: `${SHAPE_LABELS[type]} ${this._nodeCounter}`,
+        label: businessData?.title ?? `${SHAPE_LABELS[type]} ${this._nodeCounter}`,
         type,
         position: signal<IPoint>({ x: 80 + Math.random() * 500, y: 80 + Math.random() * 350 }),
         color: signal(SHAPE_COLORS[type]),
         groupId: signal(undefined),
+        businessData: signal(businessData),
       },
     ]);
   }
@@ -169,6 +198,17 @@ export class AppComponent {
 
   updateNodeColor(node: NodeDef, color: string): void {
     node.color.set(color);
+  }
+
+  updateBusinessObject(node: NodeDef, patch: Partial<BusinessObjectData>): void {
+    const current = node.businessData();
+    if (!current) return;
+
+    const next = { ...current, ...patch };
+    node.businessData.set(next);
+    if (patch.title !== undefined) {
+      this.updateNodeLabel(node, patch.title);
+    }
   }
 
   updateGroupLabel(group: GroupDef, label: string): void {
@@ -351,7 +391,7 @@ export class AppComponent {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `diagram-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.foblex.json`;
+    a.download = `diagram-${new Date().toISOString().slice(0, 19).replaceAll(/[:T]/g, '-')}.foblex.json`;
     a.click();
     URL.revokeObjectURL(url);
     this._showToast('Diagramme sauvegardé !');
@@ -364,10 +404,9 @@ export class AppComponent {
   onFileSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data: DiagramData = JSON.parse(e.target!.result as string);
+    file.text()
+      .then((content) => {
+        const data: DiagramData = JSON.parse(content);
         if (data.version !== '1.0' || !Array.isArray(data.nodes)) {
           this._showToast('Fichier invalide.');
           return;
@@ -375,12 +414,13 @@ export class AppComponent {
         this._restoreState(data);
         localStorage.setItem(LS_KEY, JSON.stringify(data));
         this._showToast('Diagramme chargé !');
-      } catch {
+      })
+      .catch(() => {
         this._showToast('Erreur de lecture du fichier.');
-      }
-      (event.target as HTMLInputElement).value = '';
-    };
-    reader.readAsText(file);
+      })
+      .finally(() => {
+        (event.target as HTMLInputElement).value = '';
+      });
   }
 
   private _serialize(): DiagramData {
@@ -393,6 +433,7 @@ export class AppComponent {
         position: n.position(),
         color: n.color(),
         groupId: n.groupId() ?? null,
+        businessData: n.businessData(),
       })),
       groups: this.groups().map((g) => ({
         id: g.id,
@@ -406,7 +447,7 @@ export class AppComponent {
 
   private _restoreState(data: DiagramData): void {
     const maxId = (prefix: string, ids: string[]) =>
-      ids.reduce((max, id) => Math.max(max, parseInt(id.replace(prefix, '')) || 0), 0);
+      ids.reduce((max, id) => Math.max(max, Number.parseInt(id.replace(prefix, ''), 10) || 0), 0);
 
     this._nodeCounter = maxId('node-', data.nodes.map((n) => n.id));
     this._groupCounter = maxId('group-', data.groups.map((g) => g.id));
@@ -420,6 +461,15 @@ export class AppComponent {
         position: signal<IPoint>(n.position),
         color: signal(n.color),
         groupId: signal(n.groupId ?? undefined),
+        businessData: signal(
+          n.type === 'business-object'
+            ? {
+                ...DEFAULT_BUSINESS_OBJECT(Number.parseInt(n.id.replace('node-', ''), 10) || 1),
+                ...n.businessData,
+                title: n.businessData?.title ?? n.label,
+              }
+            : undefined
+        ),
       }))
     );
     this.groups.set(
@@ -466,8 +516,8 @@ export class AppComponent {
       },
       children: ungroupedNodes.map((n) => ({
         id: n.id,
-        width: 160,
-        height: 60,
+        width: n.type === 'business-object' ? 264 : 160,
+        height: n.type === 'business-object' ? 128 : 60,
       })),
       edges: conns
         .filter((c) => {

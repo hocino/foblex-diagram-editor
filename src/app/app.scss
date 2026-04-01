@@ -68,9 +68,9 @@
   }
 
   .selection-badge {
-    background: #2563eb20;
-    color: #60a0ff;
-    border: 1px solid #2563eb50;
+    background: #1d4ed8;
+    color: #f8fbff;
+    border: 1px solid #3b82f6;
     border-radius: 12px;
     padding: 2px 10px;
     font-size: 11px;
@@ -181,6 +181,7 @@
   &.circle-btn  { border-color: #27AE60;  color: #5dd68e; &:hover:not(:disabled) { background: #1b3b28; border-color: #27AE60; } }
   &.diamond-btn { border-color: #E67E22;  color: #f0a85a; &:hover:not(:disabled) { background: #3d2a10; border-color: #E67E22; } }
   &.process-btn { border-color: #8E44AD;  color: #c07ae0; &:hover:not(:disabled) { background: #2e1843; border-color: #8E44AD; } }
+  &.business-btn { border-color: #f26722; color: #ffb08a; &:hover:not(:disabled) { background: #462012; border-color: #f26722; } }
 }
 
 .danger-btn {
@@ -314,6 +315,111 @@
     padding: 10px 20px;
     background: linear-gradient(135deg, #fff 0%, color-mix(in srgb, var(--node-color) 5%, #fff) 100%);
   }
+
+  &.shape-business-object {
+    .node-inner {
+      display: block;
+      padding: 0;
+      min-width: 254px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #dde0e8;
+      border-width: 2px;
+    }
+
+    .business-card {
+      width: 254px;
+      color: #2b313c;
+      background: #dde0e8;
+    }
+
+    .business-header {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      min-height: 34px;
+      border-bottom: 2px solid color-mix(in srgb, var(--node-color) 65%, #ffffff);
+      background: linear-gradient(180deg, #f8f6f6 0%, #f0eded 100%);
+    }
+
+    .business-title {
+      flex: 1;
+      padding: 8px 10px 7px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #2f2f35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .business-badges {
+      display: flex;
+      align-items: stretch;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      min-width: 34px;
+      padding: 0 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      border-left: 1px solid rgba(255, 255, 255, 0.28);
+    }
+
+    .badge-effort {
+      background: #b874d9;
+    }
+
+    .badge-code,
+    .badge-lock {
+      background: var(--node-color);
+    }
+
+    .badge-lock {
+      min-width: 28px;
+      padding: 0 6px;
+    }
+
+    .business-body {
+      padding: 10px 10px 12px;
+      background: linear-gradient(180deg, #e5e7ee 0%, #dde0e8 100%);
+    }
+
+    .business-flow {
+      margin: 0 0 8px;
+      font-size: 12px;
+      color: #313a45;
+    }
+
+    .business-meta {
+      display: grid;
+      gap: 6px;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #38414d;
+
+      svg {
+        color: #2f3540;
+        flex-shrink: 0;
+      }
+
+      strong {
+        font-weight: 700;
+        margin-right: 4px;
+      }
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -354,6 +460,11 @@
     border-color: #a84010;
     transform: scale(1.4);
   }
+}
+
+.shape-business-object .connector-in,
+.shape-business-object .connector-out {
+  align-self: center;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -468,9 +579,9 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #6b8099;
+    color: #52657c;
     border-bottom: 1px solid #eef1f5;
-    background: #f8fafc;
+    background: #edf2f7;
   }
 
   .props-body {
@@ -538,10 +649,27 @@
     font-weight: 500;
     text-transform: capitalize;
 
-    &.badge-rectangle { background: #e8f2ff; color: #4A90D9; }
-    &.badge-circle    { background: #e8fff0; color: #27AE60; }
-    &.badge-diamond   { background: #fff5e8; color: #E67E22; }
+    &.badge-rectangle { background: #dceafe; color: #1d4ed8; }
+    &.badge-circle    { background: #dcfce7; color: #15803d; }
+    &.badge-diamond   { background: #ffedd5; color: #c2410c; }
     &.badge-process   { background: #f5e8ff; color: #8E44AD; }
+    &.badge-business-object { background: #ffedd5; color: #c2410c; }
+  }
+
+  .prop-row-inline {
+    gap: 8px;
+  }
+
+  .check-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #415160;
+
+    input {
+      margin: 0;
+    }
   }
 
   .prop-mono {
