@@ -28,6 +28,7 @@ export interface DiagramData {
     label: string;
     position: IPoint;
     color: string;
+    size: NodeSize;
   }>;
   connections: Array<{ id: string; sourceId: string; targetId: string }>;
 }
@@ -46,6 +47,11 @@ export interface BusinessObjectData {
   locked: boolean;
 }
 
+export interface NodeSize {
+  width: number;
+  height: number;
+}
+
 export interface NodeDef {
   id: string;
   label: string;
@@ -61,6 +67,7 @@ export interface GroupDef {
   label: WritableSignal<string>;
   position: WritableSignal<IPoint>;
   color: WritableSignal<string>;
+  size: WritableSignal<NodeSize>;
 }
 
 export interface ConnectionDef {
@@ -104,6 +111,21 @@ const DEFAULT_BUSINESS_OBJECT = (index: number): BusinessObjectData => ({
   effort: 22,
   locked: true,
 });
+
+const GROUP_PADDING = {
+  left: 16,
+  top: 52,
+  right: 16,
+  bottom: 16,
+};
+
+const NODE_SIZES: Record<ShapeType, NodeSize> = {
+  rectangle: { width: 130, height: 40 },
+  circle: { width: 80, height: 80 },
+  diamond: { width: 80, height: 80 },
+  process: { width: 160, height: 60 },
+  'business-object': { width: 254, height: 96 },
+};
 
 @Component({
   selector: 'app-root',
@@ -229,9 +251,11 @@ export class AppComponent {
     const groupId = `group-${this._groupCounter}`;
 
     const selectedNodes = this.nodes().filter((n) => selNodeIds.includes(n.id));
-    const positions = selectedNodes.map((n) => n.position());
-    const minX = Math.min(...positions.map((p) => p.x)) - 24;
-    const minY = Math.min(...positions.map((p) => p.y)) - 48;
+    const bounds = this._getNodesBounds(selectedNodes);
+    const minX = bounds.minX - GROUP_PADDING.left;
+    const minY = bounds.minY - GROUP_PADDING.top;
+    const width = bounds.maxX - bounds.minX + GROUP_PADDING.left + GROUP_PADDING.right;
+    const height = bounds.maxY - bounds.minY + GROUP_PADDING.top + GROUP_PADDING.bottom;
 
     this.groups.update((groups) => [
       ...groups,
@@ -240,6 +264,7 @@ export class AppComponent {
         label: signal(`Groupe ${this._groupCounter}`),
         position: signal<IPoint>({ x: minX, y: minY }),
         color: signal('#F47A30'),
+        size: signal<NodeSize>({ width, height }),
       },
     ]);
 
@@ -440,6 +465,7 @@ export class AppComponent {
         label: g.label(),
         position: g.position(),
         color: g.color(),
+        size: g.size(),
       })),
       connections: this.connections().map((c) => ({ ...c })),
     };
@@ -478,6 +504,7 @@ export class AppComponent {
         label: signal(g.label),
         position: signal<IPoint>(g.position),
         color: signal(g.color),
+        size: signal<NodeSize>(g.size ?? { width: 220, height: 160 }),
       }))
     );
     this.connections.set(data.connections.map((c) => ({ ...c })));
@@ -570,5 +597,22 @@ export class AppComponent {
 
   canUngroup(): boolean {
     return this.selectedGroupIds().length > 0 && this.selectedNodeIds().length === 0;
+  }
+
+  private _getNodesBounds(nodes: NodeDef[]): { minX: number; minY: number; maxX: number; maxY: number } {
+    return nodes.reduce(
+      (acc, node) => {
+        const position = node.position();
+        const size = NODE_SIZES[node.type];
+
+        return {
+          minX: Math.min(acc.minX, position.x),
+          minY: Math.min(acc.minY, position.y),
+          maxX: Math.max(acc.maxX, position.x + size.width),
+          maxY: Math.max(acc.maxY, position.y + size.height),
+        };
+      },
+      { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
+    );
   }
 }

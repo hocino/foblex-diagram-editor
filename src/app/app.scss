@@ -475,6 +475,8 @@
   position: absolute;
   border: 2px dashed;
   border-radius: 12px;
+  box-sizing: border-box;
+  padding: 36px 16px 16px;
   min-width: 200px;
   min-height: 160px;
   background: rgba(238, 240, 252, 0.85);
@@ -488,8 +490,14 @@
   }
 
   .group-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
     display: flex;
     align-items: center;
+    min-height: 28px;
     padding: 4px 12px;
     border-radius: 8px 8px 0 0;
     cursor: grab;

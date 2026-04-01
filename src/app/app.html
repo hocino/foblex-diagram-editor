@@ -149,7 +149,10 @@
 
           <!-- ──── Groups ──── -->
           @for (group of groups(); track group.id) {
-            <div fGroup [fGroupId]="group.id" [(fGroupPosition)]="group.position" fDragHandle
+            <div fGroup [fGroupId]="group.id" [(fGroupPosition)]="group.position" [(fGroupSize)]="group.size"
+              [fAutoSizeToFitChildren]="true"
+              [fIncludePadding]="true"
+              fDragHandle
               class="group-node"
               [class.selected]="selectedGroupIds().includes(group.id)"
               [style.border-color]="group.color()">
