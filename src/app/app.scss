@@ -532,6 +532,13 @@
     }
   }
 
+  circle[f-connection-drag-handle-start],
+  circle[f-connection-drag-handle-end],
+  .f-connection-drag-handle-start,
+  .f-connection-drag-handle-end {
+    display: none !important;
+  }
+
   f-connection-for-create {
     stroke: #F47A30;
     stroke-width: 2;
